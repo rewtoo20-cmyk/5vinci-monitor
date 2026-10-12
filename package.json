@@ -46,14 +46,17 @@
         }
       ],
       "icon": "build/icon.png",
-      "artifactName": "5VINCI-Optimizer-${version}-${target}.${ext}",
       "requestedExecutionLevel": "requireAdministrator"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "5VINCI Optimizer"
+      "shortcutName": "5VINCI Optimizer",
+      "artifactName": "5VINCI-Optimizer-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "5VINCI-Optimizer-Portable-${version}.${ext}"
     }
   }
 }
