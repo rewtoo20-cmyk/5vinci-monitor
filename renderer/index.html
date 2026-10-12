@@ -2,17 +2,20 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>5VINCI Optimizer</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="shell">
+<div class="tbar"><div class="tt"><img src="icon.png" alt=""><span>5VINCI Optimizer</span></div>
+  <div class="tc"><button id="wMin" title="Свернуть" aria-label="Свернуть"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 6h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button><button id="wMax" title="Развернуть" aria-label="Развернуть"><svg id="icMax" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="2.2" y="2.2" width="7.6" height="7.6" rx="1.6"/></svg><svg id="icRes" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" style="display:none"><rect x="2" y="3.6" width="6.4" height="6.4" rx="1.4"/><path d="M4 3.6V3a1.4 1.4 0 0 1 1.4-1.4H9A1.4 1.4 0 0 1 10.4 3v3.6A1.4 1.4 0 0 1 9 8H8.4"/></svg></button><button id="wClose" class="x" title="Закрыть" aria-label="Закрыть"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2.5 2.5l7 7M9.5 2.5l-7 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button></div></div>
 <div class="app">
   <aside class="side">
     <div class="brand"><img src="icon.png" alt=""><div><b>5VINCI</b><span>Optimizer</span></div></div>
     <nav id="nav"></nav>
-    <div class="sidefoot"><i class="dot" id="dot"></i><span id="uptime">—</span></div>
+    <div class="sidefoot"><div class="lic" id="licLine"></div><div class="up"><i class="dot" id="dot"></i><span id="uptime">—</span></div></div>
   </aside>
   <main class="content" id="content">
     <section class="page" id="p-home"></section>
@@ -76,11 +79,24 @@
     </section>
   </main>
 </div>
+<div id="lock" class="lock" hidden>
+  <div class="lbox">
+    <img src="icon.png" alt="">
+    <h1>Вход по ключу</h1>
+    <p class="sub">Вставь ключ, который тебе выдал владелец 5VINCI</p>
+    <textarea id="keyIn" placeholder="VINCI.…" spellcheck="false" autocomplete="off"></textarea>
+    <div id="keyErr" class="kerr"></div>
+    <button class="btn big" id="keyGo">Войти</button>
+    <div class="mid"><small>ID этого компьютера</small><div><code id="machId">…</code><button class="btn sm ghost" id="machCp">Копировать</button></div><small>Если ключ выдан под конкретный компьютер, отправь этот ID владельцу.</small></div>
+  </div>
+</div>
+</div>
 <div id="toasts"></div>
 <div id="modal" class="modal" hidden><div class="mbox" id="mbox"></div></div>
 <script src="meta.js"></script>
 <script src="mock.js"></script>
 <script src="app.js"></script>
 <script src="ui.js"></script>
+<script src="lock.js"></script>
 </body>
 </html>

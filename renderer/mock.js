@@ -14,6 +14,14 @@
   var log = [];
   function wait(v, ms) { return new Promise(function (r) { setTimeout(function () { r(v); }, ms || 450); }); }
   function title(id) { var t = META.TWEAKS.filter(function (x) { return x.id === id; })[0]; return t ? t.title : id; }
+  var licOk = !!(window.location.hash.indexOf('licensed') >= 0);
+  var info = { id: 'abcd1234', name: 'Иван', plan: 'pro', exp: Date.now() + 29 * 864e5, bound: false };
+  window.MOCK_LIC = {
+    status: function () { return wait({ ok: licOk, info: licOk ? info : null, machine: '8CAE-A835-E408-A60A' }, 150); },
+    activate: function (k) { if (/^VINCI\./.test(String(k).trim())) { licOk = true; return wait({ ok: true, info: info, machine: '8CAE-A835-E408-A60A' }, 400); } return wait({ ok: false, msg: 'Ключ не подошёл. Проверь, что скопировал его целиком', machine: '8CAE-A835-E408-A60A' }, 400); },
+    logout: function () { licOk = false; return wait({ ok: true }, 100); },
+    onLost: function () {},
+  };
   window.MOCK_OPT = {
     catalog: function () {
       return wait({ ok: true, win: true, laptop: true, items: META.TWEAKS.map(function (t) {

@@ -161,10 +161,14 @@
   window.addEventListener('resize', function () { drawLive(); drawHist(); });
   window.__monRedraw = function () { drawLive(); drawHist(); };
   api.onError && api.onError(function () { $('dot').classList.add('bad'); });
-  api.info().then(function (i) {
-    $('sysCpu').textContent = i.cpu + ' · ' + i.cores + ' потоков';
-    $('sysOs').textContent = i.os + ' · ' + i.host;
-  });
+  window.__loadInfo = function () {
+    Promise.resolve(api.info()).then(function (i) {
+      if (!i || i.ok === false) return;
+      $('sysCpu').textContent = i.cpu + ' · ' + i.cores + ' потоков';
+      $('sysOs').textContent = i.os + ' · ' + i.host;
+    }).catch(function () {});
+  };
+  window.__loadInfo();
   api.onStats(onStats);
 
   // ---------- тестовые данные, если открыто не в приложении ----------
@@ -189,6 +193,9 @@
         }, 1000);
       },
       onError: function () {},
+      page: function () { return Promise.resolve({ ok: true }); },
+      win: { min: function () {}, max: function () { return Promise.resolve({ ok: true, max: false }); }, close: function () {}, state: function () { return Promise.resolve({ ok: true, max: false }); }, onState: function () {} },
+      license: window.MOCK_LIC,
       opt: window.MOCK_OPT,
     };
   }

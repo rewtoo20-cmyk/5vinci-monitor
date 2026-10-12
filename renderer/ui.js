@@ -1,7 +1,9 @@
 // 5VINCI Optimizer: экраны программы (главная, разделы, автозагрузка, очистка, журнал, мастер «Ускорить»)
 (function () {
   'use strict';
-  var api = window.__api, opt = api.opt, META = window.META;
+  var api = window.__api, META = window.META, rawOpt = api.opt, opt = {};
+  // любой ответ «нужен ключ» возвращает на экран входа
+  Object.keys(rawOpt).forEach(function (k) { opt[k] = function () { return Promise.resolve(rawOpt[k].apply(null, arguments)).then(function (r) { if (r && r.locked && window.__showLock) window.__showLock(); return r; }); }; });
   var $ = function (id) { return document.getElementById(id); };
   var data = null, page = 'home', busy = {};
 
@@ -18,6 +20,9 @@
     shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5L16 9.5"/>',
     check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     undo: '<path d="M9 8H4V3M4 8a9 9 0 1 1-1 5"/>',
+    eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    layout: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/>',
+    key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M16 7l3 3M14 9l2 2"/>',
   };
   var ico = function (n, s) { return '<svg width="' + (s || 20) + '" height="' + (s || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[n] + '</svg>'; };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
@@ -37,16 +42,16 @@
   // ---------- меню ----------
   var NAV = [
     ['home', 'home', 'Главная'], ['cat:net', 'wifi', 'Интернет'], ['cat:power', 'bolt', 'Батарея и питание'], ['cat:perf', 'rocket', 'Производительность'],
-    ['cat:svc', 'gear', 'Службы Windows'], ['startup', 'play', 'Автозагрузка'], ['clean', 'trash', 'Очистка диска'], ['monitor', 'chart', 'Мониторинг'], ['log', 'list', 'Журнал изменений'],
+    ['cat:priv', 'eye', 'Приватность'], ['cat:ui', 'layout', 'Проводник и вид'], ['cat:svc', 'gear', 'Службы Windows'], ['startup', 'play', 'Автозагрузка'], ['clean', 'trash', 'Очистка диска'], ['monitor', 'chart', 'Мониторинг'], ['log', 'list', 'Журнал изменений'],
   ];
   function renderNav() {
     $('nav').innerHTML = NAV.map(function (n, i) {
-      return (i === 1 || i === 5 || i === 7 ? '<div class="sep"></div>' : '') + '<button data-p="' + n[0] + '" class="' + (n[0] === page ? 'on' : '') + '">' + ico(n[1]) + '<span>' + n[2] + '</span></button>';
+      return (i === 1 || i === 7 || i === 9 ? '<div class="sep"></div>' : '') + '<button data-p="' + n[0] + '" class="' + (n[0] === page ? 'on' : '') + '">' + ico(n[1]) + '<span>' + n[2] + '</span></button>';
     }).join('');
   }
   $('nav').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) go(b.dataset.p); });
   function go(p) {
-    page = p; renderNav();
+    page = p; renderNav(); try { api.page && api.page(p === 'monitor' ? 'monitor' : p === 'home' ? 'home' : 'other'); } catch (e) {}
     var id = p.indexOf('cat:') === 0 ? 'cat' : p;
     document.querySelectorAll('.page').forEach(function (x) { x.classList.toggle('on', x.id === 'p-' + id); });
     $('content').scrollTop = 0;
@@ -60,27 +65,31 @@
 
   async function load(force) {
     if (data && !force) return data;
-    data = await opt.catalog();
+    var d = await opt.catalog();
+    if (d && d.locked) { data = null; window.__showLock && window.__showLock(); throw new Error('locked'); }
+    if (!d || !d.items) throw new Error('no data');
+    data = d;
     return data;
   }
   function counts(catId) {
-    var l = data.items.filter(function (t) { return t.cat === catId && (t.kind === 'toggle' || (t.kind === 'choice' && t.id === 'plan_perf')); });
+    var l = data.items.filter(function (t) { return t.cat === catId && !t.hide && (!t.laptop || data.laptop) && (t.kind === 'toggle' || (t.kind === 'choice' && t.id === 'plan_perf')); });
     return { on: l.filter(function (t) { return t.applied; }).length, all: l.length };
   }
 
+  function loadErr(el) { if (!window.__locked) el.innerHTML = '<div class="skeleton">Не удалось получить данные о системе. <button class="btn sm" data-act="reload">Повторить</button></div>'; }
   // ---------- главная ----------
   async function renderHome() {
     var el = $('p-home');
     if (!el.dataset.ready) el.innerHTML = '<div class="skeleton">Загрузка…</div>';
-    await load(); if (page !== 'home') return;
-    var rec = data.items.filter(function (t) { return t.rec && t.kind === 'toggle' && !t.applied && (!t.laptop || data.laptop); });
+    try { await load(); } catch (e) { return loadErr(el); } if (page !== 'home') return;
+    var rec = data.items.filter(function (t) { return t.rec && t.kind === 'toggle' && !t.applied && !t.hide && (!t.laptop || data.laptop); });
     var done = data.items.filter(function (t) { return t.rec && t.kind === 'toggle' && t.applied; }).length;
     var tiles = META.CATS.map(function (c) { var n = counts(c.id); return tile(c.id, c.icon, c.hue, c.title, c.sub, n.on + ' из ' + n.all + ' включено', 'cat:' + c.id); }).join('') +
       tile('startup', 'play', 175, 'Автозагрузка', 'Что запускается вместе с Windows', 'Открыть список', 'startup') +
       tile('clean', 'trash', 350, 'Очистка диска', 'Убрать временные файлы и кэш', 'Найти мусор', 'clean');
     el.dataset.ready = '1';
     el.innerHTML =
-      '<div class="hero"><div class="ht"><h1>Ускорь компьютер за минуту</h1><p>Мы проверим Windows, покажем, что можно отключить или почистить, и ты сам выберешь, что применить. Всё можно вернуть обратно.</p>' +
+      (data.admin === false ? '<div class="adm">Программа запущена без прав администратора, поэтому часть оптимизаций не применится. Закрой её и запусти от имени администратора.</div>' : '') + '<div class="hero"><div class="ht"><h1>Ускорь компьютер за минуту</h1><p>Мы проверим Windows, покажем, что можно отключить или почистить, и ты сам выберешь, что применить. Всё можно вернуть обратно.</p>' +
       '<div class="hbtn"><button class="btn big" data-act="wizard">' + ico('rocket', 22) + 'Проверить и ускорить</button>' + (done ? '<span class="chip ok">' + ico('check', 14) + 'Уже применено: ' + done + '</span>' : '') + '</div></div>' +
       '<div class="hs"><div class="m"><small>Процессор</small><b id="hCpu">—</b></div><div class="m"><small>Память</small><b id="hRam">—</b></div><div class="m"><small>Диск</small><b id="hDisk">—</b></div></div></div>' +
       '<h3 class="sec">Разделы</h3><div class="tiles">' + tiles + '</div>' +
@@ -110,8 +119,8 @@
   // ---------- раздел ----------
   async function renderCat(id) {
     var el = $('p-cat'), c = catOf(id);
-    el.innerHTML = '<div class="skeleton">Загрузка…</div>'; await load(); if (page !== 'cat:' + id) return;
-    var list = data.items.filter(function (t) { return t.cat === id && (!t.laptop || data.laptop || true); });
+    el.innerHTML = '<div class="skeleton">Загрузка…</div>'; try { await load(); } catch (e) { return loadErr(el); } if (page !== 'cat:' + id) return;
+    var list = data.items.filter(function (t) { return t.cat === id && !t.hide && (!t.laptop || data.laptop); });
     var body = '', n = counts(id);
     if (id === 'power') {
       var plans = list.filter(function (t) { return t.kind === 'choice'; });
@@ -120,7 +129,7 @@
       }).join('') + '</div><h3 class="sec">Настройки батареи</h3><div class="rows">' + list.filter(function (t) { return t.kind !== 'choice'; }).map(row).join('') + '</div>';
       if (!data.laptop) body += '<p class="hint">Батарея на этом компьютере не найдена, поэтому «Экономия заряда» тебе не нужна.</p>';
     } else body = '<div class="rows">' + list.map(row).join('') + '</div>';
-    el.innerHTML = '<div class="pagehead"><div class="ph-i" style="--h:' + c.hue + '">' + ico(c.icon, 28) + '</div><div><h1>' + c.title + '</h1><p class="sub">' + c.sub + (id !== 'net' || true ? ' · включено ' + n.on + ' из ' + n.all : '') + '</p></div></div>' + (data.win === false ? '<p class="hint">Оптимизации работают только в Windows.</p>' : '') + body;
+    el.innerHTML = '<div class="pagehead"><div class="ph-i" style="--h:' + c.hue + '">' + ico(c.icon, 28) + '</div><div><h1>' + c.title + '</h1><p class="sub">' + c.sub + (n.all ? ' · включено ' + n.on + ' из ' + n.all : '') + '</p></div></div>' + (data.win === false ? '<p class="hint">Оптимизации работают только в Windows.</p>' : '') + body;
   }
 
   // ---------- автозагрузка ----------
@@ -188,6 +197,7 @@
     }
     var b = e.target.closest('[data-act]'); if (!b) return;
     var a = b.dataset.act, id = b.dataset.id;
+    if (a === 'reload') { data = null; return go(page); }
     if (a === 'wizard') return wizard();
     if (a === 'toggle') { var t = tw(id); return setTweak(id, !t.applied); }
     if (a === 'choice') { var c = tw(id); if (!c.applied) return setTweak(id, true); return; }
@@ -219,7 +229,7 @@
     modal('<div class="wz"><div class="spin"></div><h2>Проверяю компьютер…</h2><p class="sub">Смотрю, что включено, и считаю мусор</p></div>');
     var res = await Promise.all([load(true), opt.cleanScan()]);
     var cl = res[1].items || [], junk = cl.reduce(function (a, c) { return a + c.size; }, 0);
-    var rec = data.items.filter(function (t) { return t.rec && t.kind === 'toggle' && !t.applied && (!t.laptop || data.laptop); });
+    var rec = data.items.filter(function (t) { return t.rec && t.kind === 'toggle' && !t.applied && !t.hide && (!t.laptop || data.laptop); });
     if (!rec.length && junk < 5e7) { busy.wizard = 0; modal('<div class="wz"><div class="okc">' + ico('check', 34) + '</div><h2>Всё уже хорошо</h2><p class="sub">Рекомендованные оптимизации включены, мусора почти нет.</p><div class="mbtn"><button class="btn" data-act="close">Закрыть</button></div></div>'); busy.wizard = 0; return; }
     busy.wizard = 0;
     modal('<div class="wz2"><h2>Вот что мы нашли</h2><p class="sub">Сними галочки с того, что не нужно. Перед изменениями создадим точку восстановления.</p><div class="wlist">' +
@@ -263,5 +273,6 @@
     if (b.dataset.act === 'close') { closeModal(); if (b.dataset.then) go(b.dataset.then); }
   });
 
-  renderNav(); go('home');
+  window.__start = function () { data = null; busy = {}; renderNav(); go('home'); };
+  window.__reset = function () { data = null; SU = null; CL = null; document.querySelectorAll('.page').forEach(function (x) { if (x.id !== 'p-monitor') { x.innerHTML = ''; delete x.dataset.ready; } }); closeModal(); };
 })();
