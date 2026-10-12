@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>5VINCI Optimizer</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><img src="icon.png" alt=""><div><b>5VINCI</b><span>Optimizer</span></div></div>
+    <nav id="nav"></nav>
+    <div class="sidefoot"><i class="dot" id="dot"></i><span id="uptime">—</span></div>
+  </aside>
+  <main class="content" id="content">
+    <section class="page" id="p-home"></section>
+    <section class="page" id="p-cat"></section>
+    <section class="page" id="p-startup"></section>
+    <section class="page" id="p-clean"></section>
+    <section class="page" id="p-log"></section>
+    <section class="page" id="p-monitor">
+      <div class="pagehead"><div><h1>Мониторинг</h1><p class="sub"><span id="sysCpu">…</span> · <span id="sysOs"></span></p></div></div>
+<div class="grid">
+  <section class="card cpu">
+    <div class="head"><h2>Процессор</h2><span class="sub" id="cpuSub"></span></div>
+    <div class="big"><b id="cpuPct">0</b><small>%</small></div>
+    <canvas id="chCpu" class="spark"></canvas>
+    <div class="cores" id="cores"></div>
+  </section>
+
+  <section class="card ram">
+    <div class="head"><h2>Память</h2><span class="sub" id="ramSub"></span></div>
+    <div class="big"><b id="ramPct">0</b><small>%</small></div>
+    <canvas id="chRam" class="spark"></canvas>
+    <div class="bar"><i id="ramBar"></i></div>
+    <div class="legend"><span id="ramUsed">—</span><span id="ramTotal">—</span></div>
+  </section>
+
+  <section class="card temp">
+    <div class="head"><h2>Температура</h2></div>
+    <div class="tl"><span>Процессор</span><b id="tCpu">нет данных</b></div>
+    <div class="tl"><span id="gName">Видеокарта</span><b id="tGpu">нет данных</b></div>
+    <div class="tl"><span>Видеокарта: загрузка</span><b id="gLoad">нет данных</b></div>
+    <div class="tl"><span>Видеопамять</span><b id="gMem">нет данных</b></div>
+    <p class="hint" id="tHint">Windows часто не отдаёт температуру процессора. Если пишет «нет данных», запусти программу от имени администратора.</p>
+  </section>
+
+  <section class="card net">
+    <div class="head"><h2>Сеть</h2></div>
+    <div class="nr"><div><small>Скачивание</small><b id="rx">0</b></div><div><small>Отдача</small><b id="tx">0</b></div></div>
+    <canvas id="chNet" class="spark"></canvas>
+  </section>
+
+  <section class="card disks">
+    <div class="head"><h2>Диски</h2></div>
+    <div id="diskList"></div>
+  </section>
+
+  <section class="card hist">
+    <div class="head"><h2>История нагрузки</h2>
+      <div class="tabs" id="tabs">
+        <button data-s="600" class="on">10 мин</button><button data-s="3600">1 час</button><button data-s="21600">6 часов</button><button data-s="86400">24 часа</button>
+      </div>
+    </div>
+    <canvas id="chHist"></canvas>
+    <div class="legend"><span class="k c1">Процессор</span><span class="k c2">Память</span><span class="k c3">Температура</span></div>
+  </section>
+
+  <section class="card procs">
+    <div class="head"><h2>Процессы</h2><span class="sub">нажми на заголовок, чтобы сортировать</span></div>
+    <table><thead><tr><th data-k="name">Имя</th><th data-k="cpu" class="r on">Процессор ↓</th><th data-k="mem" class="r">Память</th><th class="r"></th></tr></thead><tbody id="procBody"></tbody></table>
+  </section>
+</div>
+    </section>
+  </main>
+</div>
+<div id="toasts"></div>
+<div id="modal" class="modal" hidden><div class="mbox" id="mbox"></div></div>
+<script src="meta.js"></script>
+<script src="mock.js"></script>
+<script src="app.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
