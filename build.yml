@@ -1,0 +1,33 @@
+name: Сборка программы для Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Установка зависимостей
+        run: npm install
+      - name: Сборка .exe
+        run: npm run dist
+      - name: Сохранить файлы сборки
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5VINCI-Monitor-Windows
+          path: dist/*.exe
+      - name: Выложить в Releases (только для тегов v*)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
