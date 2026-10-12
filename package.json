@@ -1,0 +1,39 @@
+{
+  "name": "5vinci-monitor",
+  "version": "1.0.0",
+  "description": "5VINCI Monitor: загрузка процессора, память, диски, сеть, температуры и процессы",
+  "main": "main.js",
+  "author": "5VINCI",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
+  },
+  "dependencies": {
+    "systeminformation": "^5.23.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.vinci5.monitor",
+    "productName": "5VINCI Monitor",
+    "directories": { "output": "dist" },
+    "files": ["main.js", "preload.js", "renderer/**", "build/icon.png", "package.json"],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.png",
+      "artifactName": "5VINCI-Monitor-${version}-${target}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "5VINCI Monitor"
+    }
+  }
+}
